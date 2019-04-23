@@ -72,23 +72,23 @@ int main() {
 void linspace(double min, double max, int points, double *c) {
 	double h = (max-min)/(points-1);
 	for (int i = 0; i < points; i++) {
-		*(c+i) = min + h*i;
+		c[i] = min + h*i;
 	}
 }
 
 double fitness(double *params, double R, int species) {
-	double r = *((double*)params);
-	double K = *((double*)params+1);
-	double sigma1 = *((double*)params+2);
-	double sigma2 = *((double*)params+3);
-	double H1 = *((double*)params+4);
-	double H2 = *((double*)params+5);
-	double Imax1 = *((double*)params+6);
-	double Imax2 = *((double*)params+7);
-	double d1 = *((double*)params+8);
-	double d2 = *((double*)params+9);
-	double T = *((double*)params+10);
-	double sm = *((double*)params+11);
+	double r = params[0];
+	double K = params[1];
+	double sigma1 = params[2];
+	double sigma2 = params[3];
+	double H1 = params[4];
+	double H2 = params[5];
+	double Imax1 = params[6];
+	double Imax2 = params[7];
+	double d1 = params[8];
+	double d2 = params[9];
+	double T = params[10];
+	double sm = params[11];
 	
 	double fit = 0.0;
 	if (species == 1) {
@@ -101,19 +101,20 @@ double fitness(double *params, double R, int species) {
 }
 
 
-int func_ode(double t, const double y[], double f[], void *params) {
-	double r = *((double*)params);
-	double K = *((double*)params+1);
-	double sigma1 = *((double*)params+2);
-	double sigma2 = *((double*)params+3);
-	double H1 = *((double*)params+4);
-	double H2 = *((double*)params+5);
-	double Imax1 = *((double*)params+6);
-	double Imax2 = *((double*)params+7);
-	double d1 = *((double*)params+8);
-	double d2 = *((double*)params+9);
-	double T = *((double*)params+10);
-	double sm = *((double*)params+11);
+int func_ode(double t, const double y[], double f[], void *params_) {
+	double *params = params_;
+	double r = params[0];
+	double K = params[1];
+	double sigma1 = params[2];
+	double sigma2 = params[3];
+	double H1 = params[4];
+	double H2 = params[5];
+	double Imax1 = params[6];
+	double Imax2 = params[7];
+	double d1 = params[8];
+	double d2 = params[9];
+	double T = params[10];
+	double sm = params[11];
 	
 	double R = y[0];
 	double N1 = y[1];
