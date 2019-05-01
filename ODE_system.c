@@ -1,4 +1,3 @@
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,7 +46,8 @@ void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output);
 double fitness(struct params_rec *p, double R, int species);
 
 
-int main() {
+int main()
+{
 	FILE *file = fopen("CASE0_PDE.dat","w");
 
 
@@ -90,7 +90,8 @@ int main() {
 }
 
 
-double fitness(struct params_rec *p, double R, int species) {
+double fitness(struct params_rec *p, double R, int species)
+{
 	double fit = 0.0;
 	if (species == 1) {
 		fit = 0.05*(p->sigma1*R*p->Imax1/(p->H1+R)-p->T-p->d1);
@@ -101,9 +102,9 @@ double fitness(struct params_rec *p, double R, int species) {
 }
 
 
-int func_ode(double t, const double y[], double f[], void *p_) {
+int func_ode(double t, const double y[], double f[], void *p_)
+{
 	struct params_rec *p = p_;
-
 	double R = y[0];
 	double N1 = y[1];
 	double N2 = y[2];
@@ -113,34 +114,31 @@ int func_ode(double t, const double y[], double f[], void *p_) {
 	return GSL_SUCCESS;
 }
 
-
-
-    gsl_odeiv2_system sys = {func_ode, (void *)0, 3, (void *)p};
-    gsl_odeiv2_driver *d =
-    gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk4,1e-8, 1e-8, 0.0);
-void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output) {
+void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output)
+{
+	gsl_odeiv2_system sys = {func_ode, (void *)0, 3, (void *)p};
+	gsl_odeiv2_driver *d =
+		gsl_odeiv2_driver_alloc_y_new(&sys, gsl_odeiv2_step_rk4,
+					      1e-8, 1e-8, 0.0);
 
 	double t = 0.0;
 	double f[3];
 
 	func_ode(t,y,f,(void *)p);
-    if (output) {
-       printf("%f %f %f %f\n", 0.0, y[0], y[1]*p->sm, y[2]*p->sm);
-    }
-
-    for (int i = 1; i <= Tf; i++)
-    {
-        double ti = i;
-        int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
-
-        if (status != GSL_SUCCESS)
-        {
-            printf ("error, return value=%d\n", status);
-            break;
-        }
 	if (output) {
-		printf("%f %f %f %f\n", ti, y[0], y[1]*p->sm, y[2]*p->sm);
+		printf("%f %f %f %f\n", 0.0, y[0], y[1]*p->sm, y[2]*p->sm);
 	}
-    }
-    gsl_odeiv2_driver_free (d);
+
+	for (int i = 1; i <= Tf; i++) {
+		int status = gsl_odeiv2_driver_apply (d, &t, i, y);
+
+		if (status != GSL_SUCCESS) {
+			printf ("error, return value=%d\n", status);
+			break;
+		}
+		if (output) {
+			printf("%f %f %f %f\n", (double)i, y[0], y[1]*p->sm, y[2]*p->sm);
+		}
+	}
+	gsl_odeiv2_driver_free (d);
 }
