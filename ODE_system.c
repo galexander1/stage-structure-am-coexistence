@@ -51,17 +51,17 @@ int main() {
 	int N = 10000;
 	for (int i = 0; i < N; i++) {
 		double R = Rmin + ((Rmax-Rmin)/(double)(N-1))*((double)i);
-		if (R_vec[i] >= Rmin1 && R_vec[i] <= Rmax1) {
-			if (R_vec[i] >= Rmin2 && R_vec[i] <= Rmax2) {
-				fprintf(file,"%f %f %f\n",R_vec[i], fitness(parms, R_vec[i], 1), fitness(parms, R_vec[i], 2));
+		if (R >= Rmin1 && R <= Rmax1) {
+			if (R >= Rmin2 && R <= Rmax2) {
+				fprintf(file,"%f %f %f\n",R, fitness(parms, R, 1), fitness(parms, R, 2));
 			} else {
-				fprintf(file,"%f %f %f\n",R_vec[i], fitness(parms, R_vec[i], 1), nan(""));
+				fprintf(file,"%f %f %f\n",R, fitness(parms, R, 1), nan(""));
 			}
 		} else {
-			if (R_vec[i] >= Rmin2 && R_vec[i] <= Rmax2) {
-				fprintf(file,"%f %f %f\n",R_vec[i], nan(""), fitness(parms, R_vec[i], 2));
+			if (R >= Rmin2 && R <= Rmax2) {
+				fprintf(file,"%f %f %f\n",R, nan(""), fitness(parms, R, 2));
 			} else {
-				fprintf(file,"%f %f %f\n",R_vec[i], nan(""), nan(""));
+				fprintf(file,"%f %f %f\n",R, nan(""), nan(""));
 			}
 		}
 	}
