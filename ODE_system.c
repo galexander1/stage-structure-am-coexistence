@@ -9,6 +9,8 @@
 // gcc -lgsl -lm -o O ODE_system.c -L /usr/local/lib -I /usr/local/include/
 
 struct params_rec {
+	char *name;	/* prefix for filenames "pfx_ODE.dat", "pfx_fit.dat" */
+	int skip_steps;	/* skip this many steps before outputting data */
 	double r;	/* maximum resource biomass */
 	double K;
 	double sigma1;	/* assimilation efficiency of species 1 */
@@ -21,63 +23,84 @@ struct params_rec {
 	double d2;
 	double T;
 	double sm;	/* mass of consumer */
+	double Rmin1,Rmax1; /* range of R to calculate species 1 fitness */
+	double Rmin2,Rmax2; /* range of R to calculate species 2 fitness */
+	double Rmin,Rmax; /* overall range (superset of the species ranges) */
 };
 
 /* this is a list of all the parameter combinations to test */
 struct params_rec test_params[] = {
 	{
-	.r = 1.0,
-	.K = 6.0,
-	.sigma1 = 0.5,
-	.sigma2 = 0.5,
-	.H1 = 3.0,
-	.H2 = 2.5,
-	.Imax1 = 1.0,
-	.Imax2 = 1.1,
-	.d1 = 0.015,
-	.d2 = 0.04,
-	.T = 0.1,
-	.sm = 1e-4,
+		.name = "CASE0",
+		.skip_steps = 50000,
+		.r = 1.0,
+		.K = 6.0,
+		.sigma1 = 0.5,
+		.sigma2 = 0.5,
+		.H1 = 3.0,
+		.H2 = 2.5,
+		.Imax1 = 1.0,
+		.Imax2 = 1.1,
+		.d1 = 0.015,
+		.d2 = 0.04,
+		.T = 0.1,
+		.sm = 1e-4,
+		.Rmin1 = 0.035,
+		.Rmax1 = 3.98,
+		.Rmin2 = 0.09,
+		.Rmax2 = 3.27,
+		.Rmin = 0.0,
+		.Rmax = 4.0,
 	}
 };
 
 int func_ode(double t, const double y[], double f[], void *p_);
-void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output);
+void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, FILE *out);
 double fitness(struct params_rec *p, double R, int species);
 
 
 int main()
 {
-	FILE *file = fopen("CASE0_PDE.dat","w");
-
 	for (int i = 0; i < sizeof test_params/sizeof test_params[0]; i++) {
 		struct params_rec *p = &test_params[i];
 		double y[3] = {1,1,1};
-		simulate_ODE(p, y, 50000, /*output=*/0);
-		simulate_ODE(p, y, 1000, /*output=*/1);
+		char filename[100];
+		FILE *f;
 
+/* calculate the ODE values - resource and species populations in pfx_ODE.dat */
+		sprintf(filename, "%s_ODE.dat");
+		f = fopen(filename, "w");
+		if (!f) {
+			perror(filename);
+			return -1;
+		}
+		if (p->skip_steps) {
+			simulate_ODE(p, y, p->skip_steps, NULL);
+		}
+		simulate_ODE(p, y, 1000, f);
+		fclose(f);
 
-		double Rmin1 = 0.035;//sp2 alone.
-		double Rmax1 = 3.98;
-		double Rmin2 = 0.09;//sp1 alone.
-		double Rmax2 = 3.27;
-		double Rmin = 0.0;
-		double Rmax = 4.0;
-
+/* calculate the fitness values - ??? in pfx_fit.dat */
+		sprintf(filename, "%s_fit.dat");
+		f = fopen(filename, "w");
+		if (!f) {
+			perror(filename);
+			return -1;
+		}
 		int N = 10000;
 		for (int i = 0; i < N; i++) {
-			double R = Rmin + ((Rmax-Rmin)/(double)(N-1))*((double)i);
+			double R = p->Rmin + ((p->Rmax-p->Rmin)/(double)(N-1))*((double)i);
 			double f1 = nan("");
 			double f2 = nan("");
-			if (R >= Rmin1 && R <= Rmax1) {
+			if (R >= p->Rmin1 && R <= p->Rmax1) {
 				f1 = fitness(p, R, 1);
 			}
-			if (R >= Rmin2 && R <= Rmax2) {
+			if (R >= p->Rmin2 && R <= p->Rmax2) {
 				f2 = fitness(p, R, 2);
 			}
-			fprintf(file,"%f %f %f\n", R, f1, f2);
+			fprintf(f, "%f %f %f\n", R, f1, f2);
 		}
-		fclose(file);
+		fclose(f);
 	}
 
 	return 0;
@@ -108,7 +131,7 @@ int func_ode(double t, const double y[], double f[], void *p_)
 	return GSL_SUCCESS;
 }
 
-void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output)
+void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, FILE *out)
 {
 	gsl_odeiv2_system sys = {func_ode, (void *)0, 3, (void *)p};
 	gsl_odeiv2_driver *d =
@@ -119,8 +142,8 @@ void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output)
 	double f[3];
 
 	func_ode(t,y,f,(void *)p);
-	if (output) {
-		printf("%f %f %f %f\n", 0.0, y[0], y[1]*p->sm, y[2]*p->sm);
+	if (out) {
+		fprintf(out, "%f %f %f %f\n", 0.0, y[0], y[1]*p->sm, y[2]*p->sm);
 	}
 
 	for (int i = 1; i <= Tf; i++) {
@@ -130,8 +153,8 @@ void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output)
 			printf ("error, return value=%d\n", status);
 			break;
 		}
-		if (output) {
-			printf("%f %f %f %f\n", (double)i, y[0], y[1]*p->sm, y[2]*p->sm);
+		if (out) {
+			fprintf(out, "%f %f %f %f\n", 0.0, y[0], y[1]*p->sm, y[2]*p->sm);
 		}
 	}
 	gsl_odeiv2_driver_free (d);
