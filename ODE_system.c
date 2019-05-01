@@ -45,11 +45,12 @@ int main() {
 	double Rmax1 = 3.98;
 	double Rmin2 = 0.09;//sp1 alone.
 	double Rmax2 = 3.27;
+	double Rmin = 0.0;
+	double Rmax = 4.0;
 	
 	int N = 10000;
-	double R_vec[N];
-	linspace(0.0, 4.0, N, R_vec);
 	for (int i = 0; i < N; i++) {
+		double R = Rmin + ((Rmax-Rmin)/(double)(N-1))*((double)i);
 		if (R_vec[i] >= Rmin1 && R_vec[i] <= Rmax1) {
 			if (R_vec[i] >= Rmin2 && R_vec[i] <= Rmax2) {
 				fprintf(file,"%f %f %f\n",R_vec[i], fitness(parms, R_vec[i], 1), fitness(parms, R_vec[i], 2));
@@ -69,12 +70,6 @@ int main() {
 	return 0;
 }
 
-void linspace(double min, double max, int points, double *c) {
-	double h = (max-min)/(points-1);
-	for (int i = 0; i < points; i++) {
-		c[i] = min + h*i;
-	}
-}
 
 double fitness(double *params, double R, int species) {
 	double r = params[0];
