@@ -50,12 +50,10 @@ int main()
 {
 	FILE *file = fopen("CASE0_PDE.dat","w");
 
-
 	for (int i = 0; i < sizeof test_params/sizeof test_params[0]; i++) {
 		struct params_rec *p = &test_params[i];
 		double y[3] = {1,1,1};
-		simulate_ODE(p, y, 10000, /*output=*/0);
-		simulate_ODE(p, y, 40000, /*output=*/0);
+		simulate_ODE(p, y, 50000, /*output=*/0);
 		simulate_ODE(p, y, 1000, /*output=*/1);
 
 
