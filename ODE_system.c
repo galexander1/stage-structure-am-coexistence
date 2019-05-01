@@ -67,19 +67,15 @@ int main()
 		int N = 10000;
 		for (int i = 0; i < N; i++) {
 			double R = Rmin + ((Rmax-Rmin)/(double)(N-1))*((double)i);
+			double f1 = nan("");
+			double f2 = nan("");
 			if (R >= Rmin1 && R <= Rmax1) {
-				if (R >= Rmin2 && R <= Rmax2) {
-					fprintf(file,"%f %f %f\n",R, fitness(p, R, 1), fitness(p, R, 2));
-				} else {
-					fprintf(file,"%f %f %f\n",R, fitness(p, R, 1), nan(""));
-				}
-			} else {
-				if (R >= Rmin2 && R <= Rmax2) {
-					fprintf(file,"%f %f %f\n",R, nan(""), fitness(p, R, 2));
-				} else {
-					fprintf(file,"%f %f %f\n",R, nan(""), nan(""));
-				}
+				f1 = fitness(p, R, 1);
 			}
+			if (R >= Rmin2 && R <= Rmax2) {
+				f2 = fitness(p, R, 2);
+			}
+			fprintf(file,"%f %f %f\n", R, f1, f2);
 		}
 		fclose(file);
 	}
