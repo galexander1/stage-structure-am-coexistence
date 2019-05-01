@@ -43,20 +43,20 @@ struct params_rec test_params[] = {
 };
 
 int func_ode(double t, const double y[], double f[], void *p_);
-void simulate_ODE(struct params_rec *p, double *y0, unsigned int Tf, int output);
+void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output);
 double fitness(struct params_rec *p, double R, int species);
 
 
 int main() {
 	FILE *file = fopen("CASE0_PDE.dat","w");
-	double y0[3] = {1,1,1};
 
 
 	for (int i = 0; i < sizeof test_params/sizeof test_params[0]; i++) {
 		struct params_rec *p = &test_params[i];
-		simulate_ODE(p, y0, 10000, /*output=*/0);
-		simulate_ODE(p, y0, 40000, /*output=*/0);
-		simulate_ODE(p, y0, 1000, /*output=*/1);
+		double y[3] = {1,1,1};
+		simulate_ODE(p, y, 10000, /*output=*/0);
+		simulate_ODE(p, y, 40000, /*output=*/0);
+		simulate_ODE(p, y, 1000, /*output=*/1);
 
 
 		double Rmin1 = 0.035;//sp2 alone.
@@ -114,18 +114,14 @@ int func_ode(double t, const double y[], double f[], void *p_) {
 }
 
 
-void simulate_ODE(struct params_rec *p, double *y0, unsigned int Tf, int output) {
 
     gsl_odeiv2_system sys = {func_ode, (void *)0, 3, (void *)p};
     gsl_odeiv2_driver *d =
     gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk4,1e-8, 1e-8, 0.0);
+void simulate_ODE(struct params_rec *p, double *y, unsigned int Tf, int output) {
 
 	double t = 0.0;
-    double y[3];
 	double f[3];
-	y[0] = y0[0];
-	y[1] = y0[1];
-	y[2] = y0[2];
 
 	func_ode(t,y,f,(void *)p);
     if (output) {
