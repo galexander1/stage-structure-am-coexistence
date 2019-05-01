@@ -7,11 +7,10 @@
 #include <gsl/gsl_odeiv2.h>
 
 //compile with:
-// gcc -lgsl -lm -lblas -o O ODE_system.c -L /usr/local/lib -I /usr/local/include/
+// gcc -lgsl -lm -o O ODE_system.c -L /usr/local/lib -I /usr/local/include/
 
 int func_ode(double t, const double y[], double f[], void *params);
-void simulate_ODE(double *parms, double *y0, unsigned int Tf);
-void simulate_ODE_suppressed(double *parms, double *y0, unsigned int Tf);
+void simulate_ODE(double *parms, double *y0, unsigned int Tf, int output);
 double fitness(double *params, double R, int species);
 void linspace(double min, double max, int points, double *c);
 
@@ -32,13 +31,9 @@ int main() {
 	parms[11] = 1e-4; //sm
 	
 	double y0[3] = {1,1,1};
-	unsigned int Tf = 10000;
-	simulate_ODE_suppressed(parms, y0, Tf);
-	//y0[1] = 10;
-	Tf = 40000;
-	simulate_ODE_suppressed(parms, y0, Tf);
-	Tf = 1000;
-	simulate_ODE(parms, y0, Tf);
+	simulate_ODE(parms, y0, 10000, /*output=*/0);
+	simulate_ODE(parms, y0, 40000, /*output=*/0);
+	simulate_ODE(parms, y0, 1000, /*output=*/1);
 	
 	
 	double Rmin1 = 0.035;//sp2 alone.
@@ -121,7 +116,7 @@ int func_ode(double t, const double y[], double f[], void *params_) {
 }
 
 
-void simulate_ODE(double *parms, double *y0, unsigned int Tf) {
+void simulate_ODE(double *parms, double *y0, unsigned int Tf, int output) {
 	
     gsl_odeiv2_system sys = {func_ode, (void *)0, 3, (void *)parms};
     gsl_odeiv2_driver *d =
@@ -135,7 +130,9 @@ void simulate_ODE(double *parms, double *y0, unsigned int Tf) {
 	y[2] = y0[2];
 	
 	func_ode(t,y,f,(void *)parms);
-    printf("%f %f %f %f\n", 0.0, y[0], y[1]*parms[11], y[2]*parms[11]);
+    if (output) {
+       printf("%f %f %f %f\n", 0.0, y[0], y[1]*parms[11], y[2]*parms[11]);
+    }
 
     for (int i = 1; i <= Tf; i++)
     {
@@ -147,40 +144,9 @@ void simulate_ODE(double *parms, double *y0, unsigned int Tf) {
             printf ("error, return value=%d\n", status);
             break;
         }
+	if (output) {
 		printf("%f %f %f %f\n", ti, y[0], y[1]*parms[11], y[2]*parms[11]);
+	}
     }
     gsl_odeiv2_driver_free (d);
 }
-
-void simulate_ODE_suppressed(double *parms, double *y0, unsigned int Tf) {
-	
-    gsl_odeiv2_system sys = {func_ode, (void *)0, 3, (void *)parms};
-    gsl_odeiv2_driver *d =
-    gsl_odeiv2_driver_alloc_y_new (&sys, gsl_odeiv2_step_rk4,1e-8, 1e-8, 0.0);
-	
-	double t = 0.0;
-    double y[3];
-	double f[3];
-	y[0] = y0[0];
-	y[1] = y0[1];
-	y[2] = y0[2];
-	
-	func_ode(t,y,f,(void *)parms);
-
-    for (int i = 1; i <= Tf; i++)
-    {
-        double ti = i;
-        int status = gsl_odeiv2_driver_apply (d, &t, ti, y);
-        
-        if (status != GSL_SUCCESS)
-        {
-            printf ("error, return value=%d\n", status);
-            break;
-        }
-    }
-	y0[0] = y[0];
-	y0[1] = y[1];
-	y0[2] = y[2];
-    gsl_odeiv2_driver_free (d);
-}
-
